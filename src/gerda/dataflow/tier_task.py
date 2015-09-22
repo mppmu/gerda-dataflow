@@ -15,18 +15,28 @@
 # limitations under the License.
 #
 
+import luigi
+
 from .config import *
-from .file_key import *
 from .gerda_data import *
-from .logger import *
-from .process_dispatcher import *
-from .props import *
-from .tier0 import *
-from .tier1 import *
-from .tier2 import *
-from .tier_task import *
-from .util import *
 
 
-__all__ = [
-]
+class TierTask(luigi.Task):
+    config = luigi.Parameter(default=None)
+    file_key = luigi.Parameter()
+
+    def __init__(self, *args, **kwargs):
+        super(TierTask, self).__init__(*args, **kwargs)
+
+        self.dataflow_config = DataflowConfig.get(self.config)
+        self.key = FileKey.get(self.file_key)
+        self.gerda_data = GerdaData(self.dataflow_config)
+        self.gerda_config = self.gerda_data.config(self.key)
+
+
+
+class TierSystemTask(TierTask):
+    system = luigi.Parameter()
+
+    def __init__(self, *args, **kwargs):
+        super(TierSystemTask, self).__init__(*args, **kwargs)

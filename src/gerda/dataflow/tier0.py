@@ -15,18 +15,27 @@
 # limitations under the License.
 #
 
-from .config import *
-from .file_key import *
-from .gerda_data import *
+from collections import namedtuple
+
+import luigi
+
 from .logger import *
-from .process_dispatcher import *
-from .props import *
-from .tier0 import *
-from .tier1 import *
-from .tier2 import *
+from .config import *
+from .gerda_data import *
 from .tier_task import *
-from .util import *
 
 
-__all__ = [
-]
+class Tier0Output(namedtuple('Tier0Output', ['data', 'checksum', 'runlog'])):
+    __slots__ = ()
+
+
+
+class Tier0Avail(TierTask, luigi.task.ExternalTask):
+    def output(self):
+        raw_file = self.gerda_data.data_file(self.file_key, 'all', 'tier0')
+
+        return Tier0Output(
+            data = luigi.LocalTarget('{file}'.format(file = raw_file)),
+            runlog = luigi.LocalTarget('{file}.runlog'.format(file = raw_file)),
+            checksum = luigi.LocalTarget('{file}.md5'.format(file = raw_file))
+        )
