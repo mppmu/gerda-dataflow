@@ -63,9 +63,9 @@ class Tier2GenSystem(TierSystemTask):
 
 
 
-class Tier2Gen(TierTask, luigi.task.WrapperTask):
+class Tier2GenKey(TierKeyTask, luigi.task.WrapperTask):
     def __init__(self, *args, **kwargs):
-        super(Tier2Gen, self).__init__(*args, **kwargs)
+        super(Tier2GenKey, self).__init__(*args, **kwargs)
 
 
     def requires(self):

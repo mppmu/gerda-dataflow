@@ -30,7 +30,7 @@ class Tier0Output(namedtuple('Tier0Output', ['data', 'checksum', 'runlog'])):
 
 
 
-class Tier0Avail(TierTask, luigi.task.ExternalTask):
+class Tier0AvailKey(TierKeyTask, luigi.task.ExternalTask):
     def output(self):
         raw_file = self.gerda_data.data_file(self.file_key, 'all', 'tier0')
 

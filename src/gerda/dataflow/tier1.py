@@ -36,7 +36,7 @@ class Tier1GenSystem(TierSystemTask):
 
 
     def requires(self):
-        return Tier0Avail(self.config, self.file_key)
+        return Tier0AvailKey(self.config, self.file_key)
 
 
     def run(self):
@@ -62,9 +62,9 @@ class Tier1GenSystem(TierSystemTask):
 
 
 
-class Tier1Gen(TierTask, luigi.task.WrapperTask):
+class Tier1GenKey(TierKeyTask, luigi.task.WrapperTask):
     def __init__(self, *args, **kwargs):
-        super(Tier1Gen, self).__init__(*args, **kwargs)
+        super(Tier1GenKey, self).__init__(*args, **kwargs)
 
 
     def requires(self):

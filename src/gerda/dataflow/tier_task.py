@@ -21,12 +21,12 @@ from .config import *
 from .gerda_data import *
 
 
-class TierTask(luigi.Task):
+class TierKeyTask(luigi.Task):
     config = luigi.Parameter(default=None)
     file_key = luigi.Parameter()
 
     def __init__(self, *args, **kwargs):
-        super(TierTask, self).__init__(*args, **kwargs)
+        super(TierKeyTask, self).__init__(*args, **kwargs)
 
         self.dataflow_config = DataflowConfig.get(self.config)
         self.key = FileKey.get(self.file_key)
@@ -35,7 +35,7 @@ class TierTask(luigi.Task):
 
 
 
-class TierSystemTask(TierTask):
+class TierSystemTask(TierKeyTask):
     system = luigi.Parameter()
 
     def __init__(self, *args, **kwargs):
