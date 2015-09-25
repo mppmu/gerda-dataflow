@@ -17,24 +17,13 @@
 
 import luigi
 
-from .dataflow_task import *
-from .gerda_data import *
+from .config import *
 
 
-class TierKeyTask(DataflowTask):
-    file_key = luigi.Parameter(description="file key to be processed.")
-
-    def __init__(self, *args, **kwargs):
-        super(TierKeyTask, self).__init__(*args, **kwargs)
-
-        self.key = FileKey.get(self.file_key)
-        self.gerda_data = GerdaData(self.dataflow_config)
-        self.gerda_config = self.gerda_data.config(self.key)
-
-
-
-class TierSystemTask(TierKeyTask):
-    system = luigi.Parameter(description="name of setup system.")
+class DataflowTask(luigi.Task):
+    config = luigi.Parameter(default=None, description="dataflow configuration.")
 
     def __init__(self, *args, **kwargs):
-        super(TierSystemTask, self).__init__(*args, **kwargs)
+        super(DataflowTask, self).__init__(*args, **kwargs)
+
+        self.dataflow_config = DataflowConfig.get(self.config)

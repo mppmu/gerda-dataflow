@@ -16,6 +16,7 @@
 #
 
 from .config import *
+from .dataflow_task import *
 from .dataset import *
 from .file_key import *
 from .gerda_data import *
