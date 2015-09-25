@@ -33,9 +33,10 @@ class Tier0Output(namedtuple('Tier0Output', ['data', 'checksum', 'runlog'])):
 class Tier0AvailKey(TierKeyTask, luigi.task.ExternalTask):
     def output(self):
         raw_file = self.gerda_data.data_file(self.file_key, 'all', 'tier0')
+        raw_base = self.gerda_data.data_file_base(self.file_key, 'all', 'tier0')
 
         return Tier0Output(
             data = luigi.LocalTarget('{file}'.format(file = raw_file)),
-            runlog = luigi.LocalTarget('{file}.runlog'.format(file = raw_file)),
-            checksum = luigi.LocalTarget('{file}.md5'.format(file = raw_file))
+            runlog = luigi.LocalTarget('{base}.runlog'.format(base = raw_base)),
+            checksum = luigi.LocalTarget('{base}.md5'.format(base = raw_base))
         )

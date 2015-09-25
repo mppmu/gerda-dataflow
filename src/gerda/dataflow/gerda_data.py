@@ -97,7 +97,7 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
 
     def data_file(self, file_key, system, tier):
         if (tier == 'tier0'):
-            return self.data_file_base(file_key, system, tier)
+            return self.data_file_base(file_key, system, tier) + '.bz2'
         else:
             return self.data_file_base(file_key, system, tier) + '.root'
 
