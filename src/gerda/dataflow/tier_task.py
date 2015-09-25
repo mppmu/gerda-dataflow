@@ -16,8 +16,10 @@
 #
 
 import luigi
+from luigi.task import Register
 
 from .dataflow_task import *
+from .dataset import *
 from .gerda_data import *
 
 
@@ -38,3 +40,29 @@ class TierSystemTask(TierKeyTask):
 
     def __init__(self, *args, **kwargs):
         super(TierSystemTask, self).__init__(*args, **kwargs)
+
+
+
+class TierDatasetTask(DataflowTask):
+    dataset = luigi.Parameter(description="dataset to process.")
+
+    def __init__(self, *args, **kwargs):
+        super(TierDatasetTask, self).__init__(*args, **kwargs)
+
+        self.data = Dataset.get(self.dataset)
+
+    def requires(self):
+        task_class = Register.get_task_cls(self.of)
+        return [task_class(key.name) for key in dataset.file_keys]
+
+
+
+class TierDatasetForeach(TierDatasetTask, luigi.task.WrapperTask):
+    of = luigi.Parameter(description="task to run. The task must take a config and a file key parameter.")
+
+    def __init__(self, *args, **kwargs):
+        super(TierDatasetForeach, self).__init__(*args, **kwargs)
+
+    def requires(self):
+        task_class = Register.get_task_cls(self.of)
+        return [task_class(self.config, key.name) for key in self.data.file_keys]
