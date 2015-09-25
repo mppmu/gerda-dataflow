@@ -10,6 +10,7 @@ setup(
     license = 'Apache License 2.0',
     packages = find_packages('src'),
     package_dir = {'': 'src'},
+    scripts=['src/gerda/dataflow/gerda-raw-conv.sh'],
     install_requires = [
         'arrow',
         'enum34',

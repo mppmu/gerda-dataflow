@@ -25,7 +25,7 @@ from .tier_task import *
 from .tier1 import *
 
 
-class Tier2Output(namedtuple('Tier2Output', ['data'])):
+class Tier2Output(namedtuple('Tier2Output', ['tier2'])):
     __slots__ = ()
 
 
@@ -48,8 +48,8 @@ class Tier2GenSystem(TierSystemTask):
 
         log_target = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tier2'))
 
-        with self.input().data.open('r') as input_file:
-            with self.output().data.open('w') as output_file:
+        with self.input().tier1.open('r') as input_file:
+            with self.output().tier2.open('w') as output_file:
                 with log_target.open('w') as log_file:
                     job = run_subprocess('execModuleIni',
                         ['-o', output_file.name, '-l', log_file.name, ini_file_name, input_file.name])
@@ -58,7 +58,7 @@ class Tier2GenSystem(TierSystemTask):
 
     def output(self):
         return Tier2Output(
-            data = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, self.system, 'tier2'))
+            tier2 = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, self.system, 'tier2'))
         )
 
 

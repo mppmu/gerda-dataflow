@@ -25,7 +25,7 @@ from .tier_task import *
 from .tier0 import *
 
 
-class Tier1Output(namedtuple('Tier1Output', ['data'])):
+class Tier1Output(namedtuple('Tier1Output', ['tier1', 'tierX'])):
     __slots__ = ()
 
 
@@ -47,17 +47,31 @@ class Tier1GenSystem(TierSystemTask):
         conversion = ensure_str(raw2mgdo_config['conversion'])
         inverted = ensure_bool(raw2mgdo_config['inverted'])
 
+        polarity_str = 'inverted' if inverted else 'normal'
+
+        tier1_log_name = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tier1'))
+        tierX_log_name = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tierX'))
+
         with self.input().data.open('r') as input_file:
-            with self.output().data.open('w') as output_file:
-                raw2mgdo_opts = ['-c', conversion, '-m', '50']
-                if inverted: raw2mgdo_opts = raw2mgdo_opts + ['--inverted']
-                raw2mgdo_opts = raw2mgdo_opts + [input_file.name, '-f', output_file.name]
-                job = run_subprocess('Raw2MGDO', raw2mgdo_opts)
+            with self.output().tier1.open('w') as tier1_out:
+                with tier1_log_name.open('w') as tier1_log:
+                    with self.output().tierX.open('w') as tierX_out:
+                        with tierX_log_name.open('w') as tierX_log:
+                            job = run_subprocess(
+                                'gerda-raw-conv.sh',
+                                [
+                                    '-c', conversion, '-p', polarity_str,
+                                    input_file.name,
+                                    tier1_out.name, tier1_log.name,
+                                    tierX_out.name, tierX_log.name
+                                ]
+                            )
 
 
     def output(self):
         return Tier1Output(
-            data = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, self.system, 'tier1'))
+            tier1 = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, self.system, 'tier1')),
+            tierX = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, self.system, 'tierX'))
         )
 
 
@@ -70,3 +84,4 @@ class Tier1GenKey(TierKeyTask, luigi.task.WrapperTask):
     def requires(self):
         systems = self.gerda_config['proc'].keys()
         return [ Tier1GenSystem(self.config, self.file_key, system) for system in systems ]
+
