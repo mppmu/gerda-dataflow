@@ -48,7 +48,6 @@ class TierOptSystemTask(TierKeyTask):
 
     def __init__(self, *args, **kwargs):
         super(TierOptSystemTask, self).__init__(*args, **kwargs)
-        self.systems = [self.system] if self.system else self.gerda_config['proc'].keys()
 
 
 

@@ -43,7 +43,7 @@ class Tier2GenSystem(TierSystemTask):
         logger.debug('Running Tier2GenSystem for "{key}", system "{system}"'.format(
             key = self.file_key, system = self.system))
 
-        gelatio_config = self.gerda_config['proc'][self.system]['gelatio']
+        gelatio_config = self.gerda_config['proc']['tier2'][self.system]['gelatio']
         ini_file_name = ensure_str(gelatio_config['ini'])
 
         log_target = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tier2'))
@@ -77,5 +77,5 @@ class Tier2Gen(TierKeyTask, luigi.task.WrapperTask):
 
 
     def requires(self):
-        systems = self.gerda_config['proc'].keys()
+        systems = self.gerda_config['proc']['tier2'].keys()
         return { system: Tier2GenSystem(self.config, self.file_key, system) for system in systems }

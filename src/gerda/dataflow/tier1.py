@@ -17,7 +17,6 @@
 
 from collections import namedtuple
 import os
-import subprocess
 
 import luigi
 
@@ -27,14 +26,14 @@ from .tier_task import *
 from .tier0 import *
 
 
-class Tier1Output(namedtuple('Tier1Output', ['tier1', 'tierX'])):
-    __slots__ = ()
-
-
-
 class Tier1Gen(TierOptSystemTask):
+    class Output(namedtuple('Output', ['tier1', 'tierX'])):
+        __slots__ = ()
+
+
     def __init__(self, *args, **kwargs):
         super(Tier1Gen, self).__init__(*args, **kwargs)
+        self.systems = [self.system] if self.system else self.gerda_config['proc']['tier1'].keys()
 
 
     def requires(self):
@@ -60,12 +59,15 @@ class Tier1Gen(TierOptSystemTask):
                 stdin = None, stdout = subprocess.PIPE
             )
 
+            raw2index_config = self.gerda_config['proc']['tierX']['all']['raw2index']
+            tierX_conversion = ensure_str(raw2index_config['conversion'])
+
             for system in self.systems:
-                raw2mgdo_config = self.gerda_config['proc'][system]['raw2mgdo']
+                raw2mgdo_config = self.gerda_config['proc']['tier1'][system]['raw2mgdo']
                 conversion = ensure_str(raw2mgdo_config['conversion'])
                 inverted = ensure_bool(raw2mgdo_config['inverted'])
 
-                tier1_out = self.output()[system].tier1.open('w')
+                tier1_out = self.output().tier1[system].open('w')
                 tier1_log = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, system, 'tier1')).open('w')
                 consumers.append( Consumer(
                     label = '{key}_{system}_Raw2MGDO'.format(key = self.key.name, system = system),
@@ -76,15 +78,15 @@ class Tier1Gen(TierOptSystemTask):
                     log = tier1_log,
                 ) )
 
-                tierX_out = self.output()[system].tierX.open('w')
-                tierX_log = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, system, 'tierX')).open('w')
-                consumers.append( Consumer(
-                    label = '{key}_{system}_Raw2Index'.format(key = self.key.name, system = system),
-                    prog = 'Raw2Index',
-                    args = ['-c', conversion, '-f', tierX_out.name, 'stdin'],
-                    out = tierX_out,
-                    log = tierX_log
-                ) )
+            tierX_out = self.output().tierX['all'].open('w')
+            tierX_log = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, 'all', 'tierX')).open('w')
+            consumers.append( Consumer(
+                label = '{key}_all_Raw2Index'.format(key = self.key.name),
+                prog = 'Raw2Index',
+                args = ['-c', conversion, '-f', tierX_out.name, 'stdin'],
+                out = tierX_out,
+                log = tierX_log
+            ) )
 
             for consumer in consumers[:-1]:
                 pipes.append(Pipe(*os.pipe()))
@@ -125,7 +127,7 @@ class Tier1Gen(TierOptSystemTask):
 
 
     def output(self):
-        return { system: Tier1Output(
-            tier1 = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, system, 'tier1')),
-            tierX = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, system, 'tierX'))
-        ) for system in self.systems }
+        return Tier1Gen.Output(
+            tier1 = { system: luigi.LocalTarget(self.gerda_data.data_file(self.file_key, system, 'tier1')) for system in self.systems },
+            tierX = { 'all': luigi.LocalTarget(self.gerda_data.data_file(self.file_key, 'all', 'tierX')) }
+        ) 
