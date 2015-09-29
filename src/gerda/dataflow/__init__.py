@@ -22,7 +22,6 @@ from .file_key import *
 from .gerda_data import *
 from .local_subprocess import *
 from .logger import *
-from .process_dispatcher import *
 from .props import *
 from .tier0 import *
 from .tier1 import *
