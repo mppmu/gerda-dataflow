@@ -20,14 +20,9 @@ from collections import namedtuple
 import luigi
 
 from .logger import *
-from .process_dispatcher import *
+from .local_subprocess import *
 from .tier_task import *
 from .tier1 import *
-
-
-class Tier2Output(namedtuple('Tier2Output', ['tier2'])):
-    __slots__ = ()
-
 
 
 class Tier2GenSystem(TierSystemTask):
@@ -46,17 +41,20 @@ class Tier2GenSystem(TierSystemTask):
         gelatio_config = self.gerda_config['proc']['tier2'][self.system]['gelatio']
         ini_file_name = ensure_str(gelatio_config['ini'])
 
-        log_target = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tier2'))
+        log_target = luigi.LocalTarget(self.gerda_data.log_file(self.key, self.system, 'tier2'))
 
         log_file = None
 
         try:
             input_file = self.input().tier1[self.system].open('r')
-            output_file = self.output().tier2.open('w')
+            output_file = self.output().open('w')
             log_file = log_target.open('w')
 
-            job = run_subprocess('execModuleIni',
-                ['-o', output_file.name, '-l', log_file.name, ini_file_name, input_file.name])
+            LocalSubprocess(
+                label = '{key}_{system}_execModuleIni'.format(key = self.key.name, system = self.system),
+                program = 'execModuleIni',
+                arguments = ['-o', output_file.name, '-l', log_file.name, ini_file_name, input_file.name],
+            ).wait_and_check()
 
             output_file.close()
 
@@ -65,9 +63,7 @@ class Tier2GenSystem(TierSystemTask):
 
 
     def output(self):
-        return Tier2Output(
-            tier2 = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, self.system, 'tier2'))
-        )
+        return luigi.LocalTarget(self.gerda_data.data_file(self.key, self.system, 'tier2'))
 
 
 
