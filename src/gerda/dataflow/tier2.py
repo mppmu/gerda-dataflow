@@ -48,12 +48,18 @@ class Tier2GenSystem(TierSystemTask):
 
         log_target = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tier2'))
 
-        with self.input()[self.system].tier1.open('r') as input_file:
-            with self.output().tier2.open('w') as output_file:
-                with log_target.open('w') as log_file:
-                    job = run_subprocess('execModuleIni',
-                        ['-o', output_file.name, '-l', log_file.name, ini_file_name, input_file.name])
+        try:
+            input_file = self.input()[self.system].tier1.open('r')
+            output_file = self.output().tier2.open('w')
+            log_file = log_target.open('w')
 
+            job = run_subprocess('execModuleIni',
+                ['-o', output_file.name, '-l', log_file.name, ini_file_name, input_file.name])
+
+            output_file.close()
+
+        finally:
+            log_file.close()
 
 
     def output(self):

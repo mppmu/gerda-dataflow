@@ -114,12 +114,14 @@ class Tier1Gen(TierOptSystemTask):
             else:
                 for consumer in consumers:
                     consumer.out.close()
-                    consumer.log.close()
 
         finally:
             for pipe in pipes:
                 os.close(pipe.wr)
                 os.close(pipe.rd)
+
+            for consumer in consumers:
+                consumer.log.close()
 
 
     def output(self):
