@@ -43,6 +43,15 @@ class TierSystemTask(TierKeyTask):
 
 
 
+class TierOptSystemTask(TierKeyTask):
+    system = luigi.Parameter(description="name of setup system.", default = "")
+
+    def __init__(self, *args, **kwargs):
+        super(TierOptSystemTask, self).__init__(*args, **kwargs)
+        self.systems = [self.system] if self.system else self.gerda_config['proc'].keys()
+
+
+
 class TierDatasetTask(DataflowTask):
     dataset = luigi.Parameter(description="dataset to process.")
 

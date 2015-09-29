@@ -36,7 +36,7 @@ class Tier2GenSystem(TierSystemTask):
 
 
     def requires(self):
-        return Tier1GenSystem(self.config, self.file_key, self.system)
+        return Tier1Gen(self.config, self.file_key)
 
 
     def run(self):
@@ -48,7 +48,7 @@ class Tier2GenSystem(TierSystemTask):
 
         log_target = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tier2'))
 
-        with self.input().tier1.open('r') as input_file:
+        with self.input()[self.system].tier1.open('r') as input_file:
             with self.output().tier2.open('w') as output_file:
                 with log_target.open('w') as log_file:
                     job = run_subprocess('execModuleIni',
@@ -63,11 +63,11 @@ class Tier2GenSystem(TierSystemTask):
 
 
 
-class Tier2GenKey(TierKeyTask, luigi.task.WrapperTask):
+class Tier2Gen(TierKeyTask, luigi.task.WrapperTask):
     def __init__(self, *args, **kwargs):
-        super(Tier2GenKey, self).__init__(*args, **kwargs)
+        super(Tier2Gen, self).__init__(*args, **kwargs)
 
 
     def requires(self):
         systems = self.gerda_config['proc'].keys()
-        return [ Tier2GenSystem(self.config, self.file_key, system) for system in systems ]
+        return { system: Tier2GenSystem(self.config, self.file_key, system) for system in systems }

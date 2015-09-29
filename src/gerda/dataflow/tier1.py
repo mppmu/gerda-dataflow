@@ -16,11 +16,13 @@
 #
 
 from collections import namedtuple
+import os
+import subprocess
 
 import luigi
 
 from .logger import *
-from .process_dispatcher import *
+from .local_subprocess import *
 from .tier_task import *
 from .tier0 import *
 
@@ -30,9 +32,9 @@ class Tier1Output(namedtuple('Tier1Output', ['tier1', 'tierX'])):
 
 
 
-class Tier1GenSystem(TierSystemTask):
+class Tier1Gen(TierOptSystemTask):
     def __init__(self, *args, **kwargs):
-        super(Tier1GenSystem, self).__init__(*args, **kwargs)
+        super(Tier1Gen, self).__init__(*args, **kwargs)
 
 
     def requires(self):
@@ -43,45 +45,85 @@ class Tier1GenSystem(TierSystemTask):
         logger.debug('Running Tier1GenSystem for "{key}", system "{system}"'.format(
             key = self.file_key, system = self.system))
 
-        raw2mgdo_config = self.gerda_config['proc'][self.system]['raw2mgdo']
-        conversion = ensure_str(raw2mgdo_config['conversion'])
-        inverted = ensure_bool(raw2mgdo_config['inverted'])
+        Consumer = namedtuple('Consumer', ['label', 'prog', 'args', 'out', 'log'])
+        consumers = []
 
-        polarity_str = 'inverted' if inverted else 'normal'
+        Pipe = namedtuple('Pipe', ['rd', 'wr'])
+        pipes = []
 
-        tier1_log_name = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tier1'))
-        tierX_log_name = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tierX'))
+        try:
+            tier0_in = self.input().data.open('r')
+            producer_process = LocalSubprocess(
+                label = '{key}_raw-decompress'.format(key = self.key.name),
+                program = 'pbzip2',
+                arguments = ['-d', '-c', '-p1', tier0_in.name],
+                stdin = None, stdout = subprocess.PIPE
+            )
 
-        with self.input().data.open('r') as input_file:
-            with self.output().tier1.open('w') as tier1_out:
-                with tier1_log_name.open('w') as tier1_log:
-                    with self.output().tierX.open('w') as tierX_out:
-                        with tierX_log_name.open('w') as tierX_log:
-                            job = run_subprocess(
-                                'gerda-raw-conv.sh',
-                                [
-                                    '-c', conversion, '-p', polarity_str,
-                                    input_file.name,
-                                    tier1_out.name, tier1_log.name,
-                                    tierX_out.name, tierX_log.name
-                                ]
-                            )
+            for system in self.systems:
+                raw2mgdo_config = self.gerda_config['proc'][system]['raw2mgdo']
+                conversion = ensure_str(raw2mgdo_config['conversion'])
+                inverted = ensure_bool(raw2mgdo_config['inverted'])
+
+                tier1_out = self.output()[system].tier1.open('w')
+                tier1_log = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, system, 'tier1')).open('w')
+                consumers.append( Consumer(
+                    label = '{key}_{system}_Raw2MGDO'.format(key = self.key.name, system = system),
+                    prog = 'Raw2MGDO',
+                    args = ['-c', conversion, '-m', '50'] + (['--inverted'] if inverted else []) +
+                        ['-f', tier1_out.name, 'stdin'],
+                    out = tier1_out,
+                    log = tier1_log,
+                ) )
+
+                tierX_out = self.output()[system].tierX.open('w')
+                tierX_log = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, system, 'tierX')).open('w')
+                consumers.append( Consumer(
+                    label = '{key}_{system}_Raw2Index'.format(key = self.key.name, system = system),
+                    prog = 'Raw2Index',
+                    args = ['-c', conversion, '-f', tierX_out.name, 'stdin'],
+                    out = tierX_out,
+                    log = tierX_log
+                ) )
+
+            for consumer in consumers[:-1]:
+                pipes.append(Pipe(*os.pipe()))
+
+            tee_process = LocalSubprocess(
+                label = '{key}_raw-stream-tee'.format(key = self.key.name),
+                program = 'tee',
+                arguments = ['/dev/fd/{}'.format(pipe.wr) for pipe in pipes],
+                stdin = producer_process.stdout, stdout = subprocess.PIPE,
+                pass_fds = [pipe.wr for pipe in pipes]
+            )
+
+            consumer_inputs = [pipe.rd for pipe in pipes] + [tee_process.stdout]
+            consumer_processes = [LocalSubprocess(
+                label = consumer.label,
+                program = consumer.prog,
+                arguments = consumer.args,
+                stdin = input, stdout = consumer.log
+            ) for consumer, input in zip(consumers, consumer_inputs)]
+
+            producer_process.wait_and_check(raise_exception = True)
+            tee_process.wait_and_check(raise_exception = True)
+
+            failed = [p for  p in consumer_processes if not p.wait_and_check(raise_exception = False)]
+            if failed:
+                raise RuntimeError("Some system tasks failed: {}".format([p.label for p in failed]))
+            else:
+                for consumer in consumers:
+                    consumer.out.close()
+                    consumer.log.close()
+
+        finally:
+            for pipe in pipes:
+                os.close(pipe.wr)
+                os.close(pipe.rd)
 
 
     def output(self):
-        return Tier1Output(
-            tier1 = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, self.system, 'tier1')),
-            tierX = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, self.system, 'tierX'))
-        )
-
-
-
-class Tier1GenKey(TierKeyTask, luigi.task.WrapperTask):
-    def __init__(self, *args, **kwargs):
-        super(Tier1GenKey, self).__init__(*args, **kwargs)
-
-
-    def requires(self):
-        systems = self.gerda_config['proc'].keys()
-        return [ Tier1GenSystem(self.config, self.file_key, system) for system in systems ]
-
+        return { system: Tier1Output(
+            tier1 = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, system, 'tier1')),
+            tierX = luigi.LocalTarget(self.gerda_data.data_file(self.file_key, system, 'tierX'))
+        ) for system in self.systems }
