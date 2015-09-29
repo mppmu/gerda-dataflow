@@ -17,6 +17,7 @@
 
 from collections import namedtuple
 import os
+from distutils.spawn import find_executable
 
 import luigi
 
@@ -52,12 +53,24 @@ class Tier1Gen(TierOptSystemTask):
 
         try:
             tier0_in = self.input().data.open('r')
-            producer_process = LocalSubprocess(
-                label = '{key}_raw-decompress'.format(key = self.key.name),
-                program = 'pbzip2',
-                arguments = ['-d', '-c', '-p1', tier0_in.name],
-                stdin = None, stdout = subprocess.PIPE
-            )
+
+            producer_process = None
+            if find_executable('pbzip2'):
+                producer_process = LocalSubprocess(
+                    label = '{key}_raw-decompress'.format(key = self.key.name),
+                    program = 'pbzip2',
+                    arguments = ['-d', '-c', '-p1', tier0_in.name],
+                    stdin = None, stdout = subprocess.PIPE
+                )
+            elif find_executable('bzip2'):
+                producer_process = LocalSubprocess(
+                    label = '{key}_raw-decompress'.format(key = self.key.name),
+                    program = 'bzip2',
+                    arguments = ['-d', '-c', tier0_in.name],
+                    stdin = None, stdout = subprocess.PIPE
+                )
+            else:
+                raise RuntimeError('Need "pbzip2" ot "bzip2", but neither seems to be available.')
 
             raw2index_config = self.gerda_config['proc']['tierX']['all']['raw2index']
             tierX_conversion = ensure_str(raw2index_config['conversion'])
