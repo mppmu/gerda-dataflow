@@ -104,7 +104,7 @@ class Tier1Gen(TierOptSystemTask):
                 label = consumer.label,
                 program = consumer.prog,
                 arguments = consumer.args,
-                stdin = input, stdout = consumer.log
+                stdin = input, stdout = consumer.log, stderr = subprocess.STDOUT
             ) for consumer, input in zip(consumers, consumer_inputs)]
 
             producer_process.wait_and_check(raise_exception = True)
