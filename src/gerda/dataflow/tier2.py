@@ -48,8 +48,10 @@ class Tier2GenSystem(TierSystemTask):
 
         log_target = luigi.LocalTarget(self.gerda_data.log_file(self.file_key, self.system, 'tier2'))
 
+        log_file = None
+
         try:
-            input_file = self.input()[self.system].tier1.open('r')
+            input_file = self.input().tier1[self.system].open('r')
             output_file = self.output().tier2.open('w')
             log_file = log_target.open('w')
 
@@ -59,7 +61,7 @@ class Tier2GenSystem(TierSystemTask):
             output_file.close()
 
         finally:
-            log_file.close()
+            if log_file and not log_file.closed: log_file.close()
 
 
     def output(self):
