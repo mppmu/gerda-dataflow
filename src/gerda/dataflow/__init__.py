@@ -23,6 +23,7 @@ from .gerda_data import *
 from .local_subprocess import *
 from .logger import *
 from .props import *
+from .props_stream import *
 from .tier0 import *
 from .tier1 import *
 from .tier2 import *

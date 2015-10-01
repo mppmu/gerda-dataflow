@@ -25,9 +25,6 @@ from .util import *
 
 
 class Props():
-    __slots__ = ()
-
-
     @staticmethod
     def read_from(sources, subst_pathvar = False, subst_env = False):
         def read_impl(sources):
