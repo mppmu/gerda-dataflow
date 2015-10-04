@@ -22,7 +22,7 @@ import glob
 
 from .config import *
 from .file_key import *
-
+from .calib_catalog import *
 
 
 class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
@@ -48,24 +48,16 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
         return self.dataflow_config.setups[setup].data.meta
 
 
-    def path_name(self, file_key, system, tier):
+    def data_path_name(self, file_key, system, tier):
         key = FileKey.get(file_key)
 
         if (tier == 'tier0'):
-            return 'run{run}'.format(
-                run = key.run_str
-            )
-
+            return 'run{}'.format(key.run_str)
         else:
-            return '{tier}/{system}/{category}/run{run}'.format(
-                tier = tier,
-                system = system,
-                category = key.category,
-                run = key.run_str
-            )
+            return os.path.join(tier, system, key.category, 'run{}'.format(key.run_str))
 
 
-    def base_name(self, file_key, system, tier):
+    def data_base_name(self, file_key, system, tier):
         key = FileKey.get(file_key)
 
         if (tier == 'tier0'):
@@ -90,8 +82,8 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
 
         return os.path.join(
             data_location,
-            self.path_name(key, system, tier),
-            self.base_name(key, system, tier)
+            self.data_path_name(key, system, tier),
+            self.data_base_name(key, system, tier)
         )
 
 
@@ -109,14 +101,47 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
             return self.data_file_base(file_key, system, tier) + '.log'
 
 
+    def calib_file(self, file_key, system):
+        key = FileKey.get(file_key)
+
+        if key.category != 'cal':
+            raise ValueError("Can't generate calib file path for file key of category \"{category}\", should be \"cal\"".format(category = key.category))
+
+        return os.path.join(
+            self.meta_data_location(key.setup),
+            'calib',
+            'run-{}'.format(key.run_str),
+            '{key}-{system}-calib.json'.format(key = key.name, system = system)
+        )
+
+
+    def calib_catalog_file(self, setup):
+        return os.path.join(
+            self.meta_data_location(setup),
+            'calib',
+            '{}-calibrations.jsonl'.format(setup)
+        )
+
+
+    def calib_catalog(self, setup):
+        return CalibCatalog.read_from(self.calib_catalog_file(setup))
+
+
+    def calib_file_for(self, file_key, system):
+        key = FileKey.get(file_key)
+        calib_catalog = self.calib_catalog(key.setup)
+        calib_key = calib_catalog.calib_for(key)
+        return self.calib_file(calib_key, system)
+
+
     def config_files(self, file_key):
         key = FileKey.get(file_key)
 
         cfg_files = glob.iglob(os.path.join(self.meta_data_location(key.setup), 'config', GerdaData.config_file_name_glob))
 
         def matches_key(file_name):
-            base_name = os.path.basename(file_name)
-            m_cfg_key_part = GerdaData.config_file_name_expr.match(base_name)
+            data_base_name = os.path.basename(file_name)
+            m_cfg_key_part = GerdaData.config_file_name_expr.match(data_base_name)
             if m_cfg_key_part != None:
                 grp = m_cfg_key_part.group(1)
                 return key.matches(grp)
