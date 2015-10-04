@@ -22,11 +22,20 @@ from .logger import *
 
 
 class LocalSubprocess(object):
-    def __init__(self, label, program, arguments = [], stdin = None, stdout = None, stderr = None, close_fds = True, pass_fds=()):
+    def __init__(self,
+            label,
+            program, arguments = [],
+            stdin = None, stdout = None, stderr = None,
+            close_fds = True, env=None, pass_fds=()
+        ):
         args = [program] + arguments
         logger.debug('Dispatching system task "{label}" in sub-process: {args}'.format(label = label, args = args))
         self.label = label
-        self.process = subprocess.Popen(args = args, stdin = stdin, stdout = stdout, stderr = stderr, close_fds = close_fds, pass_fds = pass_fds)
+        self.process = subprocess.Popen(
+            args = args,
+            stdin = stdin, stdout = stdout, stderr = stderr,
+            close_fds = close_fds, env = env, pass_fds = pass_fds
+        )
 
 
     @property
