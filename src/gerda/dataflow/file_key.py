@@ -17,9 +17,6 @@
 
 from collections import namedtuple
 import re
-import dateutil.parser
-
-import arrow
 
 from .util import *
 
@@ -45,7 +42,7 @@ class FileKey(namedtuple('FileKey', ['setup', 'run', 'time', 'category'])):
 
             setup = m.group(1)
             run = int(m.group(2))
-            time = arrow.get(dateutil.parser.parse(m.group(3))).timestamp
+            time = unix_time(m.group(3))
             category = ensure_str(m.group(4))
 
             return FileKey(setup, run, time, category)
@@ -70,7 +67,7 @@ class FileKey(namedtuple('FileKey', ['setup', 'run', 'time', 'category'])):
 
     @property
     def time_str(self):
-        return arrow.get(self.time).to('UTC').format('YYYYMMDDTHHmmss')+'Z'
+        return utc_time_str(self.time)
 
     @property
     def parts(self):

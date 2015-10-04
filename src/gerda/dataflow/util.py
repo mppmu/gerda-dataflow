@@ -15,6 +15,12 @@
 # limitations under the License.
 #
 
+import types
+import dateutil.parser
+
+import arrow
+
+
 def ensure_str(value):
     if isinstance(value, str):
         return value
@@ -43,3 +49,17 @@ def non_unicode(value):
         return value.encode('utf-8')
     else:
         return value
+
+
+def unix_time(value):
+    if isinstance(value, basestring):
+        return arrow.get(dateutil.parser.parse(value)).timestamp
+    else:
+        raise ValueError("Can't convert type {t} to unix time".format(t = type(value)))
+
+
+def utc_time_str(value):
+    if isinstance(value, (types.IntType, types.LongType)):
+        return arrow.get(value).to('UTC').format('YYYYMMDDTHHmmss')+'Z'
+    else:
+        raise ValueError("Can't convert type {t} to ISO 8601 UTC time string".format(t = type(value)))
