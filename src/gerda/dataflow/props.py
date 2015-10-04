@@ -22,6 +22,7 @@ from string import Template
 
 from .logger import *
 from .util import *
+from .env import *
 
 
 class Props():
@@ -84,8 +85,7 @@ class Props():
     def subst_vars(props, var_values = {}, use_env = False, ignore_missing = False):
         combined_var_values = var_values
         if use_env:
-            combined_var_values = {k: v for k, v in os.environ.iteritems()}
-            combined_var_values.update(copy.copy(var_values))
+            combined_var_values = env_list(var_values)
         for key in props:
             value = props[key]
             if isinstance(value, basestring) and '$' in value:

@@ -15,23 +15,11 @@
 # limitations under the License.
 #
 
-from .calib_catalog import *
-from .config import *
-from .dataflow_task import *
-from .dataset import *
-from .env import *
-from .file_key import *
-from .gerda_data import *
-from .local_subprocess import *
-from .logger import *
-from .props import *
-from .props_stream import *
-from .tier0 import *
-from .tier1 import *
-from .tier2 import *
-from .tier_task import *
-from .util import *
+import copy
+import os
 
 
-__all__ = [
-]
+def env_list(additional = {}):
+    result = {k: v for k, v in os.environ.iteritems()}
+    result.update(copy.copy(additional))
+    return result
