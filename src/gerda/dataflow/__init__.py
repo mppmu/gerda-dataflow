@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+from .calib_catalog import *
 from .config import *
 from .dataflow_task import *
 from .dataset import *
