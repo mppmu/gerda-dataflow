@@ -29,6 +29,7 @@ from .props_stream import *
 from .tier0 import *
 from .tier1 import *
 from .tier2 import *
+from .tier3 import *
 from .tier_task import *
 from .util import *
 
