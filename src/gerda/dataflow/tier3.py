@@ -50,22 +50,31 @@ class Tier3Gen(TierKeyTask):
         log_file = None
 
         try:
-            ged_input_file = self.input()['ged'].open('r')
-            pmt_input_file = self.input()['pmt'].open('r')
-            spm_input_file = self.input()['spm'].open('r')
+            input = self.input()
+
+            ged_only = not ('pmt' in input and 'spm' in input)
 
             output_file = self.output().open('w')
             log_file = log_target.open('w')
 
+            ged_input_file = input['ged'].open('r')
+
+            arguments = [
+                '-c', cuts,
+                '-e', ged_calib_file,
+                '-o', output_file.name,
+                ged_input_file.name
+            ]
+
+            if not ged_only:
+                pmt_input_file = input['pmt'].open('r')
+                spm_input_file = input['spm'].open('r')
+                arguments = arguments + [pmt_input_file.name, spm_input_file.name]
+
             LocalSubprocess(
                 label = '{key}_all_buildTier3'.format(key = self.key.name),
                 program = 'buildTier3',
-                arguments = [
-                    '-c', cuts,
-                    '-e', ged_calib_file,
-                    '-o', output_file.name,
-                    ged_input_file.name, pmt_input_file.name, spm_input_file.name
-                ],
+                arguments = arguments,
                 stdout = log_file, stderr = subprocess.STDOUT,
                 env = env_list(additional = {'MU_CAL': ged_runcfg_dir})
             ).wait_and_check()
