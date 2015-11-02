@@ -43,7 +43,8 @@ class Tier3Gen(TierKeyTask):
         cuts = tier3_config['buildTier3']['cuts']
         ged_runcfg_dir = tier3_config['buildTier3']['geruncfg']
 
-        ged_calib_file = self.gerda_data.calib_file_for(self.key, 'ged')
+        ged_calib_file = self.gerda_data.calib_file_for(self.key, 'ged', 'tier3')
+        pmt_calib_file = self.gerda_data.calib_file_for(self.key, 'pmt', 'tier3', allow_none = True)
 
         log_target = luigi.LocalTarget(self.gerda_data.log_file(self.key, 'all', 'tier3'))
 
@@ -61,7 +62,13 @@ class Tier3Gen(TierKeyTask):
 
             arguments = [
                 '-c', cuts,
-                '-e', ged_calib_file,
+                '-e', ged_calib_file
+            ]
+
+            if (pmt_calib_file is not None):
+                arguments = arguments + ['-v', pmt_calib_file]
+
+            arguments = arguments + [
                 '-o', output_file.name,
                 ged_input_file.name
             ]

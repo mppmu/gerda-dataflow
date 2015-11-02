@@ -23,6 +23,7 @@ from .logger import *
 from .local_subprocess import *
 from .tier_task import *
 from .tier1 import *
+from .props import *
 
 
 class Tier2GenSystem(TierSystemTask):
@@ -38,8 +39,13 @@ class Tier2GenSystem(TierSystemTask):
         logger.debug('Running Tier2GenSystem for "{key}", system "{system}"'.format(
             key = self.file_key, system = self.system))
 
+        tier2_calib = self.gerda_data.calib_props_for(self.key, 'ged', 'tier2', allow_empty = True)
         gelatio_config = self.gerda_config['proc']['tier2'][self.system]['gelatio']
+        Props.add_to(gelatio_config, tier2_calib.get('gelatio', {}))
+
         ini_file_name = ensure_str(gelatio_config['ini'])
+        gelatio_env = gelatio_config.get('env', {})
+        logger.debug('Environment variables for execModuleIni: {env}'.format(env = gelatio_env))
 
         log_target = luigi.LocalTarget(self.gerda_data.log_file(self.key, self.system, 'tier2'))
 
@@ -54,6 +60,7 @@ class Tier2GenSystem(TierSystemTask):
                 label = '{key}_{system}_execModuleIni'.format(key = self.key.name, system = self.system),
                 program = 'execModuleIni',
                 arguments = ['-o', output_file.name, '-l', log_file.name, ini_file_name, input_file.name],
+                env = env_list(additional = gelatio_env)
             ).wait_and_check()
 
             output_file.close()

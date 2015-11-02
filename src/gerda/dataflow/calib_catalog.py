@@ -42,22 +42,34 @@ class CalibCatalog(namedtuple('CalibCatalog', ['entries'])):
 
     @staticmethod
     def read_from(file_name):
-        return CalibCatalog(
-            entries = sorted(
-                [
-                    CalibCatalog.Entry(FileKey.get(props['key']), unix_time(props['valid']['from']))
-                    for props in PropsStream.get(file_name)
-                ],
+        entries = {}
+
+        for props in PropsStream.get(file_name):
+            file_key = FileKey.get(props['key'])
+            for system, timestamp in props['valid'].iteritems():
+                if system not in entries:
+                    entries[system] = []
+                entries[system].append(CalibCatalog.Entry(file_key, unix_time(timestamp)))
+
+        for system in entries:
+            entries[system] = sorted(
+                entries[system],
                 key = lambda entry: entry.valid_from
             )
-        )
+
+        return CalibCatalog(entries)
 
 
-    def calib_for(self, file_key):
-        key = FileKey.get(file_key)
-        valid_from = [ entry.valid_from for entry in self.entries if entry.key.setup == key.setup ]
-        pos = bisect.bisect_right(valid_from, key.time)
-        if pos > 0:
-            return self.entries[pos - 1].key
+    def calib_for(self, file_key, system, allow_none = False):
+        if system in self.entries:
+            key = FileKey.get(file_key)
+            valid_from = [ entry.valid_from for entry in self.entries[system] if entry.key.setup == key.setup ]
+            pos = bisect.bisect_right(valid_from, key.time)
+            if pos > 0:
+                return self.entries[system][pos - 1].key
+            else:
+                if allow_none: return None
+                else: raise RuntimeError("No valid calibration found for file key \"{key}\", system \"{system}\"".format(key = key.name, system = system))
         else:
-            raise RuntimeError("No valid calibration found for file key \"{key}\"".format(key = key.name))
+            if allow_none: return None
+            else: raise RuntimeError("No calibrations found for system \"{system}\"".format(system = system))

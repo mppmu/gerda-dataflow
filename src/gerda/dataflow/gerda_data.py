@@ -20,6 +20,7 @@ import re
 import os
 import glob
 
+from .props import *
 from .config import *
 from .file_key import *
 from .calib_catalog import *
@@ -101,7 +102,7 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
             return self.data_file_base(file_key, system, tier) + '.log'
 
 
-    def calib_file(self, file_key, system):
+    def calib_file(self, file_key, system, tier):
         key = FileKey.get(file_key)
 
         if key.category != 'cal':
@@ -111,7 +112,7 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
             self.meta_data_location(key.setup),
             'calib',
             'run-{}'.format(key.run_str),
-            '{key}-{system}-calib.json'.format(key = key.name, system = system)
+            '{key}-{system}-{tier}-calib.json'.format(key = key.name, system = system, tier = tier)
         )
 
 
@@ -127,11 +128,25 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
         return CalibCatalog.read_from(self.calib_catalog_file(setup))
 
 
-    def calib_file_for(self, file_key, system):
+    def calib_file_for(self, file_key, system, tier, allow_none = False):
         key = FileKey.get(file_key)
         calib_catalog = self.calib_catalog(key.setup)
-        calib_key = calib_catalog.calib_for(key)
-        return self.calib_file(calib_key, system)
+        calib_key = calib_catalog.calib_for(key, system, allow_none)
+        if allow_none and calib_key is None: return None
+        else: return self.calib_file(calib_key, system, tier)
+
+
+    def calib_props_for(self, file_key, system, tier, allow_empty = False):
+        calib_file = self.calib_file_for(file_key, system, tier, allow_empty)
+        if calib_file is None:
+            assert(allow_empty)
+            return {}
+        else:
+            if os.path.isfile(calib_file):
+                return Props.read_from([calib_file], subst_pathvar = True, subst_env = True)
+            else:
+                if allow_empty: return {}
+                else: raise RuntimeError("No valid calibration found for file key \"{key}\", system \"{system}\", tier \"{tier}\"".format(key = key.name, system = system, tier = tier))
 
 
     def config_files(self, file_key):
