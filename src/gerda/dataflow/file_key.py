@@ -30,8 +30,12 @@ class FileKey(namedtuple('FileKey', ['setup', 'run', 'time', 'category'])):
 
 
     @staticmethod
-    def get(value):
-        if isinstance(value, FileKey):
+    def get(value, allow_none = False):
+        if value is None:
+            if allow_none: return None
+            else: raise ValueError("Can't create FileKey from None")
+
+        elif isinstance(value, FileKey):
             return value
 
         elif isinstance(value, basestring):
