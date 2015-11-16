@@ -53,9 +53,9 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
         key = FileKey.get(file_key)
 
         if (tier == 'tier0'):
-            return 'run{}'.format(key.run_str)
+            return key.run_str
         else:
-            return os.path.join(tier, system, key.category, 'run{}'.format(key.run_str))
+            return os.path.join(tier, system, key.category, key.run_str)
 
 
     def data_base_name(self, file_key, system, tier):
@@ -111,7 +111,7 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
         return os.path.join(
             self.meta_data_location(key.setup),
             'calib',
-            'run{}'.format(key.run_str),
+            key.run_str,
             '{key}-{system}-{tier}-calib.json'.format(key = key.name, system = system, tier = tier)
         )
 

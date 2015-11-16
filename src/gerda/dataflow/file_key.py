@@ -57,7 +57,7 @@ class FileKey(namedtuple('FileKey', ['setup', 'run', 'time', 'category'])):
 
     @property
     def name(self):
-        return '{setup}-run{run}-{time}-{category}'.format(
+        return '{setup}-{run}-{time}-{category}'.format(
             setup = self.setup,
             run = self.run_str,
             time = self.time_str,
@@ -67,7 +67,7 @@ class FileKey(namedtuple('FileKey', ['setup', 'run', 'time', 'category'])):
 
     @property
     def run_str(self):
-        return '{r:04d}'.format(r = self.run)
+        return 'run{r:04d}'.format(r = self.run)
 
     @property
     def time_str(self):
@@ -75,7 +75,7 @@ class FileKey(namedtuple('FileKey', ['setup', 'run', 'time', 'category'])):
 
     @property
     def parts(self):
-        return (self.setup, 'run{}'.format(self.run_str), self.time_str, self.category)
+        return (self.setup, self.run_str, self.time_str, self.category)
 
 
     def matches(self, wildcard_key):
