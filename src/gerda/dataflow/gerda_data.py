@@ -111,7 +111,7 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
         return os.path.join(
             self.meta_data_location(key.setup),
             'calib',
-            'run-{}'.format(key.run_str),
+            'run{}'.format(key.run_str),
             '{key}-{system}-{tier}-calib.json'.format(key = key.name, system = system, tier = tier)
         )
 
