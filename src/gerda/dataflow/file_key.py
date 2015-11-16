@@ -75,7 +75,7 @@ class FileKey(namedtuple('FileKey', ['setup', 'run', 'time', 'category'])):
 
     @property
     def parts(self):
-        return (self.setup, self.run_str, self.time_str, self.category)
+        return (self.setup, 'run{}'.format(self.run_str), self.time_str, self.category)
 
 
     def matches(self, wildcard_key):
