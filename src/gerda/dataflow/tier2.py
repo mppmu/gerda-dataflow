@@ -48,18 +48,22 @@ class Tier2GenSystem(TierSystemTask):
         logger.debug('Environment variables for execModuleIni: {env}'.format(env = gelatio_env))
 
         log_target = luigi.LocalTarget(self.gerda_data.log_file(self.key, self.system, 'tier2'))
+        err_target = luigi.LocalTarget(self.gerda_data.data_file_base(self.key, self.system, 'tier2') + '.msg')
 
         log_file = None
+        err_file = None
 
         try:
             input_file = self.input().tier1[self.system].open('r')
             output_file = self.output().open('w')
             log_file = log_target.open('w')
+            err_file = err_target.open('w')
 
             LocalSubprocess(
                 label = '{key}_{system}_execModuleIni'.format(key = self.key.name, system = self.system),
                 program = 'execModuleIni',
                 arguments = ['-o', output_file.name, '-l', log_file.name, ini_file_name, input_file.name],
+                stdout = err_file, stderr = subprocess.STDOUT,
                 env = env_list(additional = gelatio_env)
             ).wait_and_check()
 
@@ -67,6 +71,7 @@ class Tier2GenSystem(TierSystemTask):
 
         finally:
             if log_file and not log_file.closed: log_file.close()
+            if err_file and not err_file.closed: err_file.close()
 
 
     def output(self):
