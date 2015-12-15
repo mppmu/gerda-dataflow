@@ -35,8 +35,12 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
 
     raw_file_suffix = {
         'phy': '',
-        'cal': '-calib'
+        'cal': '-calib',
+        'pca': '-pcalib'
     }
+
+
+    calib_categories = [ 'cal', 'pca' ]
 
 
     def raw_data_location(self, setup):
@@ -105,7 +109,7 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
     def calib_file(self, file_key, system, tier):
         key = FileKey.get(file_key)
 
-        if key.category != 'cal':
+        if key.category not in GerdaData.calib_categories:
             raise ValueError("Can't generate calib file path for file key of category \"{category}\", should be \"cal\"".format(category = key.category))
 
         return os.path.join(
