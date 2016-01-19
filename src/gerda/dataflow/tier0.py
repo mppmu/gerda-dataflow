@@ -25,7 +25,7 @@ from .gerda_data import *
 from .tier_task import *
 
 
-class Tier0Output(namedtuple('Tier0Output', ['data', 'checksum', 'runlog'])):
+class Tier0Output(namedtuple('Tier0Output', ['data', 'runlog'])):
     __slots__ = ()
 
 
@@ -38,5 +38,4 @@ class Tier0AvailKey(TierKeyTask, luigi.task.ExternalTask):
         return Tier0Output(
             data = luigi.LocalTarget('{file}'.format(file = raw_file)),
             runlog = luigi.LocalTarget('{base}.runlog'.format(base = raw_base)),
-            checksum = luigi.LocalTarget('{base}.md5'.format(base = raw_base))
         )
