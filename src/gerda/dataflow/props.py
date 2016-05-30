@@ -27,7 +27,7 @@ from .env import *
 
 class Props():
     @staticmethod
-    def read_from(sources, subst_pathvar = False, subst_env = False):
+    def read_from(sources, subst_pathvar = False, subst_env = False, trim_null = False):
         def read_impl(sources):
             if isinstance(sources, basestring):
                 file_name = sources
@@ -53,6 +53,8 @@ class Props():
         result = read_impl(sources)
         if subst_env:
             Props.subst_vars(result, var_values = {}, use_env = True, ignore_missing = False)
+        if trim_null:
+            Props.trim_null(result)
         return result
 
 
@@ -99,3 +101,14 @@ class Props():
                     props[key] = new_value
             elif isinstance(value, dict):
                 Props.subst_vars(value, combined_var_values, False, ignore_missing)
+
+
+    @staticmethod
+    def trim_null(props_a):
+        a = props_a
+
+        for key in a.keys():
+            if isinstance(a[key], dict):
+                Props.trim_null(a[key])
+            elif a[key] is None:
+                del a[key]
