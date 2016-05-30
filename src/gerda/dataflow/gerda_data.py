@@ -147,7 +147,7 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
             return {}
         else:
             if os.path.isfile(calib_file):
-                return Props.read_from([calib_file], subst_pathvar = True, subst_env = True)
+                return Props.read_from([calib_file], subst_pathvar = True, subst_env = True, trim_null = True)
             else:
                 if allow_empty: return {}
                 else: raise RuntimeError("No valid calibration found for file key \"{key}\", system \"{system}\", tier \"{tier}\"".format(key = key.name, system = system, tier = tier))
@@ -172,4 +172,4 @@ class GerdaData(namedtuple('GerdaData', ['dataflow_config'])):
 
     def config(self, file_key):
         key = FileKey.get(file_key)
-        return Props.read_from(self.config_files(key), subst_pathvar = True, subst_env = True)
+        return Props.read_from(self.config_files(key), subst_pathvar = True, subst_env = True, trim_null = True)
