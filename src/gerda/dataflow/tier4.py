@@ -41,6 +41,7 @@ class Tier4Gen(TierKeyTask):
         tier3_config = self.gerda_config['proc']['tier3']['all']
         ged_runcfg_dir = tier3_config['buildTier3']['geruncfg']
 
+        ged_psd_file = self.gerda_data.calib_file_for(self.key, 'ged', 'tier4')
         pmt_threshold_file = self.gerda_data.calib_file_for(self.key, 'pmt', 'tier4')
 
         log_target = luigi.LocalTarget(self.gerda_data.log_file(self.key, 'all', 'tier4'))
@@ -57,7 +58,10 @@ class Tier4Gen(TierKeyTask):
 
             arguments = []
 
-            arguments = arguments + ['-t', pmt_threshold_file]
+            arguments = arguments + [
+                '-p', ged_psd_file,
+                '-t', pmt_threshold_file
+            ]
 
             arguments = arguments + [
                 '-o', output_file.name,
