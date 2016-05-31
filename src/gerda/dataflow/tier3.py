@@ -42,6 +42,7 @@ class Tier3Gen(TierKeyTask):
         tier3_config = self.gerda_config['proc']['tier3']['all']
         cuts = tier3_config['buildTier3']['cuts']
         ged_runcfg_dir = tier3_config['buildTier3']['geruncfg']
+        energyreco = tier3_config['buildTier3']['energyreco']
 
         ged_calib_file = self.gerda_data.calib_file_for(self.key, 'ged', 'tier3')
         pmt_calib_file = self.gerda_data.calib_file_for(self.key, 'pmt', 'tier3', allow_none = True)
@@ -62,7 +63,8 @@ class Tier3Gen(TierKeyTask):
 
             arguments = [
                 '-c', cuts,
-                '-e', ged_calib_file
+                '-e', ged_calib_file,
+                '-r', energyreco
             ]
 
             if (pmt_calib_file is not None):
