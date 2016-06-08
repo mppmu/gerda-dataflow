@@ -38,8 +38,9 @@ class Tier4Gen(TierKeyTask):
     def run(self):
         logger.debug('Running Tier4Gen for "{key}"'.format(key = self.file_key))
 
-        tier3_config = self.gerda_config['proc']['tier3']['all']
-        ged_runcfg_dir = tier3_config['buildTier3']['geruncfg']
+        tier4_config = self.gerda_config['proc']['tier4']['all']
+        buildTier4_cfg = tier4_config['buildTier4']
+        psdclassfdata = buildTier4_cfg.get('psdclassfdata')
 
         ged_psd_file = self.gerda_data.calib_file_for(self.key, 'ged', 'tier4')
         pmt_threshold_file = self.gerda_data.calib_file_for(self.key, 'pmt', 'tier4')
@@ -67,6 +68,9 @@ class Tier4Gen(TierKeyTask):
                 '-o', output_file.name,
                 input_file.name
             ]
+
+            if (psdclassfdata is not None):
+                arguments = arguments + ['-m', psdclassfdata]
 
             LocalSubprocess(
                 label = '{key}_all_buildTier4'.format(key = self.key.name),
