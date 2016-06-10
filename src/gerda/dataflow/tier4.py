@@ -38,6 +38,9 @@ class Tier4Gen(TierKeyTask):
     def run(self):
         logger.debug('Running Tier4Gen for "{key}"'.format(key = self.file_key))
 
+        tier3_config = self.gerda_config['proc']['tier3']['all']
+        ged_runcfg_dir = tier3_config['buildTier3']['geruncfg']
+
         tier4_config = self.gerda_config['proc']['tier4']['all']
         buildTier4_cfg = tier4_config['buildTier4']
         psdclassfdata = buildTier4_cfg.get('psdclassfdata')
