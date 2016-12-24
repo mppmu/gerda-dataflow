@@ -15,8 +15,6 @@ setup(
         'arrow',
         'enum34',
         'luigi',
-        'radical.pilot',
-        'saga-python',
         'subprocess32'
     ],
     zip_safe = False
